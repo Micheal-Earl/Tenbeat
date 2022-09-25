@@ -16,10 +16,15 @@ func Init() *gorm.DB {
 		log.Fatalln(err)
 	}
 
-	err = db.AutoMigrate(&models.Book{})
+	migrate(db, &models.Book{})
+	migrate(db, &models.User{})
+
+	return db
+}
+
+func migrate(db *gorm.DB, model any) {
+	err := db.AutoMigrate(&model)
 	if err != nil {
 		log.Fatalln(err)
 	}
-
-	return db
 }

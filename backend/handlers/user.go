@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -14,29 +13,27 @@ import (
 func (h handler) Login(c *gin.Context) {
 	session := sessions.Default(c)
 
-	// type user struct {
-	// 	username string
-	// 	password string
-	// }
+	var user models.User
 
-	var u models.User
-
-	err := c.BindJSON(&u)
+	err := c.BindJSON(&user)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
 		return
 	}
 
-	fmt.Println(u)
-
 	// Validate form input
-	if strings.Trim(u.Username, " ") == "" || strings.Trim(u.Password, " ") == "" {
+	if strings.Trim(user.Username, " ") == "" || strings.Trim(user.Password, " ") == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Parameters can't be empty"})
 		return
 	}
 
 	// Check for username and password match, usually from a database
-	if u.Username != "hello" || u.Password != "itsme" {
+	userFromDB, err := h.GetUser(c, user.Username)
+	if err != nil {
+		http.Error(c.Writer, "Could not find user", http.StatusInternalServerError)
+	}
+
+	if user.Password != userFromDB.Password {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication failed"})
 		return
 	}
@@ -49,30 +46,41 @@ func (h handler) Login(c *gin.Context) {
 	// 	Secure: true,
 	// }
 	// session.Options(sessionConfig)
-	session.Set(global.Userkey, u.Username) // In real world usage you'd set this to the users ID
+	//session.Set(userFromDB.Id, userFromDB.Username) // In real world usage you'd set this to the users ID
+	session.Set(global.Userkey, userFromDB.Username)
 	err = session.Save()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
 		return
 	}
 
-	fmt.Println(c.Cookie("mysession"))
+	//fmt.Println(c.Cookie("mysession"))
 
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully authenticated user"})
 }
 
 func (h handler) Logout(c *gin.Context) {
 	session := sessions.Default(c)
-	user := session.Get(global.Userkey)
-	if user == nil {
+
+	sessionToken := session.Get(global.Userkey)
+	if sessionToken == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid session token"})
 		return
 	}
+
 	session.Delete(global.Userkey)
 	if err := session.Save(); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save session"})
 		return
 	}
-	fmt.Println(c.Cookie("mysession"))
+
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged out"})
+}
+
+func (h handler) GetUser(c *gin.Context, username string) (*models.User, error) {
+	var user models.User
+
+	result := h.DB.Table("users").Where("username = ?", username).First(&user)
+
+	return &user, result.Error
 }
