@@ -18,8 +18,6 @@ const UserLogin = () => {
 				username: username,
 				password: password,
 			}, { crossDomain: true, withCredentials: true }).then((response) => {
-				//console.log(response.data.message)
-				//console.log(response.data.error)
 				setRes(response.data);
 			}).catch((error) => {
 				setRes(error.response.data);

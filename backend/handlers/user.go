@@ -22,7 +22,7 @@ func (h handler) Login(c *gin.Context) {
 	}
 
 	// Validate form input
-	if strings.Trim(user.Username, " ") == "" || strings.Trim(user.Password, " ") == "" {
+	if strings.Trim(user.Username, " ") == "" || strings.Trim(user.PasswordHash, " ") == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Parameters can't be empty"})
 		return
 	}
@@ -33,7 +33,7 @@ func (h handler) Login(c *gin.Context) {
 		http.Error(c.Writer, "Could not find user", http.StatusInternalServerError)
 	}
 
-	if user.Password != userFromDB.Password {
+	if user.PasswordHash != userFromDB.PasswordHash {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Authentication failed"})
 		return
 	}
