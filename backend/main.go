@@ -1,8 +1,12 @@
 package main
 
 import (
-	"fmt"
+	"context"
+	"log"
 	"net/http"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/contrib/sessions"
@@ -10,9 +14,14 @@ import (
 	"mikesprogram.com/tenbeat/db"
 	"mikesprogram.com/tenbeat/global"
 	"mikesprogram.com/tenbeat/handlers"
+	"mikesprogram.com/tenbeat/middleware"
 )
 
 func main() {
+	// Create context that listens for the interrupt signal from the OS.
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
 	DB := db.Init()
 	h := handlers.New(DB)
 
@@ -33,45 +42,46 @@ func main() {
 	router.PUT("/books/:id", h.UpdateBook)
 	router.DELETE("/books/:id", h.DeleteBook)
 
-	router.POST("/login", h.Login)
-	router.GET("/logout", h.Logout)
+	router.POST("/register", h.RegisterUser)
+	router.POST("/token", h.GenerateToken)
+	router.POST("/valid", h.ValidatePassword)
+
+	// router.POST("/login", h.Login)
+	// router.GET("/logout", h.Logout)
 
 	// Private group, require authentication to access
 	private := router.Group("/private")
-	private.Use(AuthRequired)
+	private.Use(middleware.JWTAuth)
 	{
-		private.GET("/me", me)
-		private.GET("/status", status)
+		private.GET("/me", h.Me)
+		private.GET("/status", h.Status)
 	}
 
-	err := router.Run("localhost:9090")
-	if err != nil {
-		return
-	}
-}
-
-func AuthRequired(c *gin.Context) {
-	session := sessions.Default(c)
-	user := session.Get(global.Userkey)
-	if user == nil {
-		// Abort the request with the appropriate error code
-		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
+	srv := &http.Server{
+		Addr:    "localhost:9090",
+		Handler: router,
 	}
 
-	fmt.Println(session)
-	fmt.Println(c.Cookie("mysession"))
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen: %s\n", err)
+		}
+	}()
 
-	// Continue down the chain to handler etc
-	c.Next()
-}
+	// Listen for the interrupt signal.
+	<-ctx.Done()
 
-func me(c *gin.Context) {
-	session := sessions.Default(c)
-	user := session.Get(global.Userkey)
-	c.JSON(http.StatusOK, gin.H{"user": user})
-}
+	// Restore default behavior on the interrupt signal and notify user of shutdown.
+	stop()
+	log.Println("shutting down gracefully, press Ctrl+C again to force")
 
-func status(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"status": "You are logged in"})
+	// The context is used to inform the server it has 5 seconds to finish
+	// the request it is currently handling
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Fatal("Server forced to shutdown: ", err)
+	}
+
+	log.Println("Server exiting")
 }
