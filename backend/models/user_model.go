@@ -1,9 +1,13 @@
 package models
 
-import "golang.org/x/crypto/bcrypt"
+import (
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
+)
 
 type User struct {
-	ID           int    `json:"id" gorm:"primaryKey;unique;AUTO_INCREMENT"`
+	gorm.Model
+	// ID           int    `json:"id" gorm:"primaryKey;unique;AUTO_INCREMENT"`
 	Username     string `json:"username" gorm:"type:varchar(28);unique; not null"`
 	PasswordHash string `json:"password" gorm:"type:varchar(100);not null"`
 	Email        string `json:"email" gorm:"unique"`

@@ -60,22 +60,3 @@ input {
 .header nav a.active {
 	background: rgba(0, 0, 0, 0.4);
 }
-
-ul {
-	margin-top: 20px;
-	padding: 0px;
-	display: grid;
-	gap: 10px 10px;
-	grid-template-columns: repeat(3, 1fr);
-	grid-auto-rows: minmax(100px, auto);
-	list-style: none;
-	color: rgb(232, 230, 227);
-}
-
-ul li {
-	padding: 10px;
-	border: 1px solid rgb(82, 46, 146);
-	background-color: rgb(82, 46, 146);
-	box-shadow: rgba(0, 0, 0, 0.5) 0px 0px 5px;
-	border-radius: 10px;
-}

@@ -18,6 +18,7 @@ func Init() *gorm.DB {
 
 	migrate(db, &models.Book{})
 	migrate(db, &models.User{})
+	migrate(db, &models.Post{})
 
 	return db
 }
