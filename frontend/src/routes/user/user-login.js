@@ -8,14 +8,14 @@ import UserHeader from './user-header'
 const baseURL = "http://localhost:9090"
 
 const UserLogin = () => {
-	const [username, setUsername] = useState(null)
+	const [email, setEmail] = useState(null)
 	const [password, setPassword] = useState(null)
 	const [res, setRes] = useState(null)
 
 	function login() {
 		axios
-			.post(baseURL + "/login", {
-				username: username,
+			.post(baseURL + "/user/login", {
+				email: email,
 				password: password,
 			}, { crossDomain: true, withCredentials: true }).then((response) => {
 				setRes(response.data);
@@ -28,12 +28,12 @@ const UserLogin = () => {
 		<div class={style.user}>
 			<UserHeader />
 			<form>
-				<label>Username:
+				<label>Email:
 					<input
 						type="text"
-						name="username"
-						value={username}
-						onInput={e => setUsername(e.target.value)}
+						name="email"
+						value={email}
+						onInput={e => setEmail(e.target.value)}
 					/>
 				</label>
 				<label>Password:
@@ -53,13 +53,16 @@ const UserLogin = () => {
 
 function messageOrError(res) {
 	if (!res) return ""
+
+	if (res.hasOwnProperty("error")) {
+		return res.error
+	}
+
 	if (res.hasOwnProperty("message")) {
 		return res.message
-	} else if (res.hasOwnProperty("error")) {
-		return res.error
-	} else {
-		return "invalid response"
 	}
+
+	return "invalid response"
 }
 
 export default UserLogin;

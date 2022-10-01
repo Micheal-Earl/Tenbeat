@@ -42,12 +42,13 @@ func main() {
 	router.PUT("/books/:id", h.UpdateBook)
 	router.DELETE("/books/:id", h.DeleteBook)
 
-	router.POST("/register", h.RegisterUser)
-	router.POST("/token", h.GenerateToken)
-	router.POST("/valid", h.ValidatePassword)
+	router.POST("/user/register", h.RegisterUser)
+	router.POST("/user/login", h.LoginUser)
 
 	// router.POST("/login", h.Login)
 	// router.GET("/logout", h.Logout)
+
+	router.GET("/user/logout", middleware.JWTAuth, h.LogoutUser)
 
 	// Private group, require authentication to access
 	private := router.Group("/private")

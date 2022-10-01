@@ -2,8 +2,10 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	"mikesprogram.com/tenbeat/auth"
 	"mikesprogram.com/tenbeat/models"
 )
 
@@ -13,6 +15,11 @@ func (h handler) RegisterUser(c *gin.Context) {
 	err := c.BindJSON(&user)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.Abort()
+		return
+	}
+	if strings.Trim(user.Username, " ") == "" || strings.Trim(user.PasswordHash, " ") == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Parameters can't be empty"})
 		c.Abort()
 		return
 	}
@@ -37,7 +44,7 @@ func (h handler) RegisterUser(c *gin.Context) {
 	)
 }
 
-func (h handler) ValidatePassword(c *gin.Context) {
+func (h handler) LoginUser(c *gin.Context) {
 	var user models.User
 
 	err := c.BindJSON(&user)
@@ -46,10 +53,15 @@ func (h handler) ValidatePassword(c *gin.Context) {
 		c.Abort()
 		return
 	}
+	if strings.Trim(user.Email, " ") == "" || strings.Trim(user.PasswordHash, " ") == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Parameters can't be empty"})
+		c.Abort()
+		return
+	}
 
 	var userCompare models.User
 
-	result := h.DB.First(&userCompare, "username = ?", user.Username)
+	result := h.DB.First(&userCompare, "email = ?", user.Email)
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": result.Error.Error()})
 		c.Abort()
@@ -58,12 +70,34 @@ func (h handler) ValidatePassword(c *gin.Context) {
 
 	err = userCompare.CheckPassword(user.PasswordHash)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"valid": false})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		c.Abort()
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"valid": true})
+	// Generate token
+	tokenString, err := auth.GenerateJWT(userCompare.Email, userCompare.Username)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.Abort()
+		return
+	}
+
+	c.SetCookie("Authorization", tokenString, 2147383647, "/", "localhost", true, true)
+
+	c.JSON(
+		http.StatusOK,
+		gin.H{"message": "User logged in - Token generated"},
+	)
+}
+
+func (h handler) LogoutUser(c *gin.Context) {
+	c.SetCookie("Authorization", "", 0, "/", "localhost", true, true)
+
+	c.JSON(
+		http.StatusOK,
+		gin.H{"message": "User logged out - Token removed"},
+	)
 }
 
 // func (h handler) Login(c *gin.Context) {
@@ -74,12 +108,6 @@ func (h handler) ValidatePassword(c *gin.Context) {
 // 	err := c.BindJSON(&user)
 // 	if err != nil {
 // 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
-// 		return
-// 	}
-
-// 	// Validate form input
-// 	if strings.Trim(user.Username, " ") == "" || strings.Trim(user.PasswordHash, " ") == "" {
-// 		c.JSON(http.StatusBadRequest, gin.H{"error": "Parameters can't be empty"})
 // 		return
 // 	}
 

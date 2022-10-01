@@ -3,15 +3,26 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/gin-gonic/contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"mikesprogram.com/tenbeat/global"
+	"mikesprogram.com/tenbeat/auth"
 )
 
 func (h handler) Me(c *gin.Context) {
-	session := sessions.Default(c)
-	user := session.Get(global.Userkey)
-	c.JSON(http.StatusOK, gin.H{"user": user})
+	tokenString, err := c.Cookie("Authorization")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.Abort()
+		return
+	}
+
+	claims, err := auth.GetTokenClaims(tokenString)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.Abort()
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"user": claims.Username})
 }
 
 func (h handler) Status(c *gin.Context) {

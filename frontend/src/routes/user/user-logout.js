@@ -12,7 +12,7 @@ const UserLogout = () => {
 
 	function login() {
 		axios
-			.get(baseURL + "/logout", { crossDomain: true, withCredentials: true }).then((response) => {
+			.get(baseURL + "/user/logout", { crossDomain: true, withCredentials: true }).then((response) => {
 				setRes(response.data);
 			}).catch((error) => {
 				setRes(error.response.data);
@@ -32,13 +32,16 @@ const UserLogout = () => {
 
 function messageOrError(res) {
 	if (!res) return ""
+
+	if (res.hasOwnProperty("error")) {
+		return res.error
+	}
+
 	if (res.hasOwnProperty("message")) {
 		return res.message
-	} else if (res.hasOwnProperty("error")) {
-		return res.error
-	} else {
-		return "invalid response"
 	}
+
+	return "invalid response"
 }
 
 export default UserLogout;
