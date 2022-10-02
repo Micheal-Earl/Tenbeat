@@ -12,7 +12,7 @@ const PrivateStatus = () => {
 
 	useEffect(() => {
 		axios
-			.get(baseURL + "/private/status", { crossDomain: true, withCredentials: true }).then((response) => {
+			.get(baseURL + "/status", { crossDomain: true, withCredentials: true }).then((response) => {
 				setRes(response.data);
 			}).catch((error) => {
 				setRes(error.response.data);

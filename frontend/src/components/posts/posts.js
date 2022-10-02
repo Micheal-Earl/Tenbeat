@@ -1,5 +1,7 @@
 import { h } from 'preact';
 import { Link } from 'preact-router/match';
+import axios from 'axios';
+import { useEffect, useState } from "preact/hooks";
 import style from './style.css';
 
 const data = [
@@ -27,9 +29,18 @@ const data = [
   },
 ]
 
-function Posts() {
+const baseURL = "http://localhost:9090"
 
-  const listPosts = data.map(post =>
+function Posts() {
+  const [postList, setPostList] = useState([])
+
+  useEffect(() => {
+    axios.get(baseURL + "/posts").then((response) => {
+      setPostList(response.data);
+    });
+  }, []);
+
+  const listPosts = postList.map(post =>
     <li class={style.postitem} key={post.id}>
       <div class={style.postthumbnail}>
         <img src="https://i.imgur.com/r1FFPz9.jpeg"></img>
@@ -38,8 +49,8 @@ function Posts() {
         <h2>{post.title}</h2>
         <span class={style.postmetadata}>
           <p>Author: {post.owner.username}</p>
-          <p>Created on: {post.created_at}</p>
-          <p>Updated on: {post.updated_at}</p>
+          <p>Created on: {post.createdAt}</p>
+          <p>Updated on: {post.updatedAt}</p>
         </span>
         <details>
           <summary>Open Post</summary>

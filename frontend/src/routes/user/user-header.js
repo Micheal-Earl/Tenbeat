@@ -7,6 +7,7 @@ const UserHeader = () => (
     <h1>User</h1>
     <nav>
       <Link activeClassName={style.active} href="/user">User Home</Link>
+      <Link activeClassName={style.active} href="/user/register">Register</Link>
       <Link activeClassName={style.active} href="/user/login">Login</Link>
       <Link activeClassName={style.active} href="/user/logout">Logout</Link>
     </nav>

@@ -22,7 +22,7 @@ func (h handler) Me(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"user": claims.Username})
+	c.JSON(http.StatusOK, gin.H{"message": claims.Username})
 }
 
 func (h handler) Status(c *gin.Context) {

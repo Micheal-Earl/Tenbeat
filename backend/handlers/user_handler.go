@@ -40,7 +40,7 @@ func (h handler) RegisterUser(c *gin.Context) {
 
 	c.JSON(
 		http.StatusCreated,
-		gin.H{"userId": user.ID, "email": user.Email, "username": user.Username},
+		gin.H{"message": "User Registered"},
 	)
 }
 
@@ -76,7 +76,7 @@ func (h handler) LoginUser(c *gin.Context) {
 	}
 
 	// Generate token
-	tokenString, err := auth.GenerateJWT(userCompare.Email, userCompare.Username)
+	tokenString, err := auth.GenerateJWT(userCompare.Email, userCompare.Username, userCompare.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		c.Abort()

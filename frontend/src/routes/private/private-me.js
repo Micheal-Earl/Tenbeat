@@ -12,7 +12,7 @@ const PrivateMe = () => {
 
 	useEffect(() => {
 		axios
-			.get(baseURL + "/private/me", { crossDomain: true, withCredentials: true }).then((response) => {
+			.get(baseURL + "/me", { crossDomain: true, withCredentials: true }).then((response) => {
 				setRes(response.data);
 			}).catch((error) => {
 				setRes(error.response.data);
@@ -31,13 +31,16 @@ const PrivateMe = () => {
 
 function messageOrError(res) {
 	if (!res) return ""
-	if (res.hasOwnProperty("user")) {
-		return res.user
-	} else if (res.hasOwnProperty("error")) {
+
+	if (res.hasOwnProperty("error")) {
 		return res.error
-	} else {
-		return "invalid response"
 	}
+
+	if (res.hasOwnProperty("message")) {
+		return res.message
+	}
+
+	return "invalid response"
 }
 
 export default PrivateMe;

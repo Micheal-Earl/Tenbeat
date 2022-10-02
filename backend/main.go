@@ -35,28 +35,31 @@ func main() {
 
 	router.Use(sessions.Sessions("mysession", sessions.NewCookieStore(global.Secret)))
 
-	// Routes
-	router.GET("/books", h.GetAllBooks)
-	router.GET("/books/:id", h.GetBook)
-	router.POST("/books", h.AddBook)
-	router.PUT("/books/:id", h.UpdateBook)
-	router.DELETE("/books/:id", h.DeleteBook)
+	// Post Routes
+	router.GET("/posts", h.GetAllPosts)
+	router.GET("/posts/:id", h.GetPost)
 
+	// Authorized Post Routes
+	router.POST("/posts", h.CreatePost)
+	router.PUT("/posts/:id", h.UpdatePost)
+	router.DELETE("/posts/:id", h.DeletePost)
+
+	// User Routes
 	router.POST("/user/register", h.RegisterUser)
 	router.POST("/user/login", h.LoginUser)
 
-	// router.POST("/login", h.Login)
-	// router.GET("/logout", h.Logout)
-
+	// Authorized User Routes
 	router.GET("/user/logout", middleware.JWTAuth, h.LogoutUser)
+	router.GET("/me", middleware.JWTAuth, h.Me)
+	router.GET("/status", middleware.JWTAuth, h.Status)
 
-	// Private group, require authentication to access
-	private := router.Group("/private")
-	private.Use(middleware.JWTAuth)
-	{
-		private.GET("/me", h.Me)
-		private.GET("/status", h.Status)
-	}
+	// // Private group, require authentication to access
+	// private := router.Group("/private")
+	// private.Use(middleware.JWTAuth)
+	// {
+	// 	private.GET("/me", h.Me)
+	// 	private.GET("/status", h.Status)
+	// }
 
 	srv := &http.Server{
 		Addr:    "localhost:9090",
